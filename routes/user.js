@@ -1,12 +1,12 @@
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const prisma = require("../db")
+import express from 'express'
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import prisma from "../db/index.js";
 
 // module.exports = function (passport){
 const router = express.Router()
 
-module.exports = function(authMiddleware){
+export default function(authMiddleware){
 router.get("/",async (req, res)=>{
   const token = req.headers.authorization.split(" ")[1]
   jwt.verify(token, process.env.JWT_SECRET, function(err, decoded) {
@@ -23,6 +23,23 @@ router.get("/",async (req, res)=>{
 router.get("/user",authMiddleware,async (req, res) => {
   res.json({user:req.user})
 })
+router.get("/topic/:id/",authMiddleware,async (req, res) => {
+  
+    const differenceInMilliseconds = Date.now() - (1000 * 60 * 60);
+    let users = await prisma.user.findMany({where: {
+        activity: {
+          some: {
+            lastActive: {
+              gte: new Date(differenceInMilliseconds), },
+          },
+        },
+       topics: {
+          some: {id:req.params.id},
+        },
+      },})
+      res.json(users)
+})
+
 router.post('/register', async (req, res) => {
     const { email, password,name,educator } = req.body;
   
@@ -62,14 +79,16 @@ router.post('/login', async (req, res) => {
     try {
       // Find user by username
       const user = await prisma.user.findUnique({ where: { email } });
-  
+        
       if (!user || !bcrypt.compareSync(password, user.password)) {
         return res.status(401).json({ message: 'Invalid email or password' });
       }
   
       // Generate JWT token with user ID
       const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '23h' }); // Adjust expiration as needed
-  
+      await prisma.user.update({where:{email: email},data: {
+       lastActive: new Date()
+      },})
       res.json({ token });
     } catch (error) {
       res.status(500).json({ message: 'Error logging in' });

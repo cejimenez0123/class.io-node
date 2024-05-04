@@ -1,9 +1,9 @@
-const express = require('express');
-const prisma = require("../db");
+import express from 'express'
+import prisma from "../db/index.js";
 
 const router = express.Router()
 
-module.exports = function(authMiddleware){
+export default function(authMiddleware){
 
         router.get("/",async (req,res)=>{
             let topics = await prisma.topic.findMany()
@@ -11,29 +11,38 @@ module.exports = function(authMiddleware){
            
         })
         router.post("/:id/user",authMiddleware,async (req,res)=>{
-            const topic = req.params.id
+            const id= req.params.id
+            const userId =req.user.id
             const userTopic = await prisma.userTopic.create({data:{
     user:{
-        connect: req.user.id
+        
+        connect: {
+            id:userId
+        }
     },
     topic:{
-        connect:id
-    }
+        connect:{
+            id: id
+    }}
 } })
+res.json(userTopic)
+        })
+        router.get("/user",authMiddleware,async (req,res)=>{
+
+            let topics = await prisma.userTopic.findMany({where: {userId:req.params.id},include:{topic:true}})
+            res.json(topics)
         })
         router.get("/:id/user/",authMiddleware,async (req,res)=>{
             const user = await prisma.userTopic.findMany({where:{
                 topic:{
                     id: req.params.id
-                },
-                include:{
-                    user: true
                 }
                 
-            }})
+            },include:{user:true}})
 
             res.json(user)
         })
+
     
     return router
 }

@@ -1,10 +1,10 @@
-const LocalStrategy = require("passport-local");
-const prisma = require("../db");
-const BearerStrategy = require('passport-http-bearer').Strategy;
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs')
+import LocalStrategy from "passport-local";
+import  prisma from "../db/index.js"
+import Bearer from 'passport-http-bearer'
+import jwt from 'jsonwebtoken'
+import bcrypt from 'bcryptjs'
 function setUpPassportLocal(passport){
-passport.use(new BearerStrategy(async (token, done) => {
+passport.use(new Bearer.Strategy(async (token, done) => {
   try {
     // Verify token authenticity and extract user ID
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -43,4 +43,4 @@ function checkIfAuthenticated(req, res, next) {
     }
   }
 
-module.exports = { checkIfAuthenticated,setUpPassportLocal}
+export {checkIfAuthenticated,setUpPassportLocal}
