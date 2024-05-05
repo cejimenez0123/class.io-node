@@ -21,7 +21,6 @@ export default function(authMiddleware){
                 }
             }})
             res.json(quiz)
-
         })
         router.post("/:id/join",authMiddleware, async (req,res)=>{
 

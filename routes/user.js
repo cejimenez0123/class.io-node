@@ -20,6 +20,19 @@ router.get("/",async (req, res)=>{
     }
   })
 })
+router.get("/auth",async (req, res)=>{
+    const token = req.headers.authorization.split(" ")[1]
+    jwt.verify(token, process.env.JWT_SECRET, function(err, decoded) {
+      if (err) {
+       res.status(401).json({   name: 'TokenExpiredError',
+       message: 'jwt expired'})
+      }else{
+        res.status(200).json({   
+          name: 'TokenSuccess',
+          message: 'Token Acitive'})
+      }
+    })
+  })
 router.get("/user",authMiddleware,async (req, res) => {
   res.json({user:req.user})
 })
