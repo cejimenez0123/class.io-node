@@ -1,6 +1,5 @@
 import express from 'express'
 import prisma from "../db/index.js";
-import llamaAPI from "../llama/index.js"
 const router = express.Router()
 
 export default function(authMiddleware){
@@ -10,8 +9,18 @@ export default function(authMiddleware){
             res.json(topics)
            
         })
+        router.get("/user",authMiddleware,async (req,res)=>{
+            let quizzes = await prisma.userQuiz.findMany({where:{
+                    userId: req.user.id
+                }, include: {
+                    quiz:true
+
+                }})
+              
+            res.json(quizzes)
+        })
         router.post("/",authMiddleware, async (req,res)=>{
-            const {topicId} = res.body
+            const {topicId} = req.body
 
             const quiz = await prisma.quiz.create({data:{
                 topic:{
@@ -19,6 +28,12 @@ export default function(authMiddleware){
                         id: topicId
                     }
                 }
+            }})
+            await prisma.userQuiz.create({data:{
+                user:{
+                    connect:{id: req.user.id}
+                },
+                quiz: {connect:{id:quiz.id}}
             }})
             res.json(quiz)
         })

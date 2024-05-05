@@ -10,6 +10,10 @@ export default function(authMiddleware){
             res.json(topics)
            
         })
+        router.get("/:id",async (req,res)=>{
+            let topic = await prisma.topic.findFirst({where:{id:req.params.id}})
+            res.json(topic)
+        })
         router.post("/:id/user",authMiddleware,async (req,res)=>{
             const id= req.params.id
             const userId =req.user.id

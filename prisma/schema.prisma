@@ -49,6 +49,7 @@ model UserQuiz {
       userId     String @db.ObjectId
       quiz Quiz    @relation(fields: [quizId], references: [id])
       quizId     String @db.ObjectId
+      created DateTime @default(now())
 }
 model UserAnswer{
   id String @id @default(auto()) @map("_id") @db.ObjectId
@@ -65,6 +66,7 @@ model Quiz {
     topic Topic   @relation(fields: [topicId], references: [id])
     topicId String @db.ObjectId
     questions QuizQuestion[]
+    created DateTime @default(now())
     
 }
 model Answer {
