@@ -69,14 +69,11 @@ router.post('/register', async (req, res) => {
   
       // Hash password securely (at least 10 rounds)
       const hashedPassword = await bcrypt.hash(password, 10);
-  
-      // Create new user in Prisma
+
       const user = await prisma.user.create({
         data: { email,name:name, password: hashedPassword,educator:educator, lastActive: new Date()},
       });
   
-      // Optionally generate a JWT token (avoid storing full credentials in token)
-      // and send it as a response (not in body for security)
       const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '23h' });
   
       res.status(201).json({ message: 'User registered successfully', token }); // Securely send token in header

@@ -10,8 +10,11 @@ export default function(authMiddleware){
             res.json(topics)
            
         })
-        router.get("/:id",async (req,res)=>{
-            let topic = await prisma.topic.findFirst({where:{id:req.params.id}})
+        router.get("/find/:id",async (req,res)=>{
+            let id = req.params.id
+            console.log(id)
+            let topic = await prisma.topic.findFirst({where:{
+                id:id}})
             res.json(topic)
         })
         router.post("/:id/user",authMiddleware,async (req,res)=>{
@@ -33,7 +36,7 @@ res.json(userTopic)
         })
         router.get("/user",authMiddleware,async (req,res)=>{
 
-            let topics = await prisma.userTopic.findMany({where: {userId:req.params.id},include:{topic:true}})
+            let topics = await prisma.userTopic.findMany({where: {userId:req.user.id},include:{topic:true}})
             res.json(topics)
         })
         router.get("/:id/user/",authMiddleware,async (req,res)=>{
