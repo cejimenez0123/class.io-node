@@ -8,6 +8,7 @@ import  userRoutes from './routes/user.js'
 import  topicRoutes from './routes/topic.js'
 import quizRoutes from './routes/quiz.js'
 import questionRoutes from './routes/question.js'
+import flashcardRoutes from "./routes/flashcard.js"
 import {setUpPassportLocal}from "./middleware/auth.js"
 
 dotenv.config()
@@ -28,6 +29,7 @@ app.get('/', (req, res, next) => {
 
     res.status(200).json({message:"Hello World"})
 })
+app.use("/flashcard",flashcardRoutes(authMiddleware))
 app.use("/question",questionRoutes(authMiddleware))
 app.use("/quiz",quizRoutes(authMiddleware))
 app.use("/user",userRoutes(authMiddleware))

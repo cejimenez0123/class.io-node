@@ -5,22 +5,38 @@ import apiRequests from './apiRequests.js';
 const router = express.Router()
 
 export default function(authMiddleware){
-        function parseFrontBack(response){
-            let content = response["choices"][0].message.content
-            
-            let list = content.split("\n").filter(e=>e!="")
-let answer= list[list.findIndex(e=>/"([^"]+)"/.test(e))].split(" ")
-const front = answer[answer.length-1]
-// console.log(list)
-const back = list[list.findIndex(e=>e.toLowerCase().includes("definition: "))]
-            return {front,back}
-        }
+
      
-        router.post("/topic/:id", async (req, res) => {
-            let request = apiRequests['66352d583acf32f3f108c9ae'].flashcards()
+        router.post("/topic/:id/count/:count", async (req, res) => {
             let id = req.params.id
+            let count = req.params.count
+            let request = apiRequests[id].flashcards(count)
+            
             let response = await llamaAPI.run(request)
-            const {front,back} =parseFrontBack(response)
+            let jsonStr = response.choices[0].message.content
+            let json = JSON.parse(jsonStr)
+            if(json.length>1){
+                let flashPromise = json.map(flash=>{
+
+                    return prisma.flashcard.create({data:{
+                      front: flash.front,
+                      back : flash.back,
+                      topic:{
+                        connect:{
+                            id: id
+                        }
+                      }
+                    }})
+                })
+                const flashcards = await Promise.all(flashPromise)
+                
+                res.json(flashcards)
+
+            }else{
+
+          
+
+            
             const flashcard = await  prisma.flashcard.create({data:{
                         front:front,
                         back:back,
@@ -31,6 +47,7 @@ const back = list[list.findIndex(e=>e.toLowerCase().includes("definition: "))]
                         }
                 }})
             res.json(flashcard)
+        }
         })
 
     return router

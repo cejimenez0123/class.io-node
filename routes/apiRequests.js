@@ -33,11 +33,17 @@ const apiRequests = {
     "function_call": "answer_math_questions"
    }
     },
-flashcards:()=>{return{"model": "llama2-13b-chat",
+flashcards:(count)=>{
+    let plural = ""
+    if(count>1){
+        plural = "s"
+    }
+    
+    return{"model": "llama2-13b-chat",
 "messages": [
   {
     "role": "user",
-    "content": "Please provide me with a quiz word from highschool algebra and its definition"
+    "content": `Generate ${count}  quiz word${plural} from highschool algebra and its definition in a json format with attributes front with the word and back with the definition. No pleasantries`
   }
 ],
 "function_call": "create_math_flashcards"
