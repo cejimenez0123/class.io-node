@@ -27,46 +27,82 @@ function parseQuestionAndAnswer(responseQuestion){
 export default function(authMiddleware){
 
 
-    router.get("/topic/:id/quiz/:quizId",async (req,res)=>{
+    router.get("/topic/:id/quiz/:quizId/:count",async (req,res)=>{
         try{
-                const questionRequest = apiRequests[req.params.id].question()
+                const questionRequest = apiRequests[req.params.id].jsonQuestion(req.params.count)
+            
                 let response = await llamaAPI.run(questionRequest)
-                const questionAnswer = parseQuestionAndAnswer(response)
-                console.log(req.params.id)
-                let answerRequest = apiRequests[req.params.id].answer(questionAnswer.question,questionAnswer.answers)
-             
-                const resAns = await llamaAPI.run(answerRequest).catch(error=>{
+                let jsonRes = JSON.parse(response.choices[0].message.content)
+                
+               if(jsonRes.length>1){
+       
+                  let questionsAnswers = jsonRes.map(async (json) => {
+                    let question = await prisma.question.create({
+                        data: {
+                          topic: {
+                            connect: {
+                              id: req.params.id,
+                            },
+                          },
+                          content: json.question,
+                          difficulty: 1,
+                          correctAnswer: json.correct,
+                        },
+                      });
+                      
+                    const answers = json.answers.map((answer) => {
+                  
+                        return prisma.answer.create({
+                          data: {
+                            content: answer,
+                            question: {
+                              connect: { id: question.id },
+                            },
+                          },
+                      });
+                    })
+
+                    const responseAnswers = await Promise.all(answers);
+            
+                    return { question, answers: responseAnswers };
+                });
+               
+                  let resBody = await Promise.all(questionsAnswers);
+                  
+                  res.json(resBody);
+   
         
-                    throw new Error({source:"AnswerRequest",error:error})
-                })
-                const finalAnswer = parseCorrectAnswer(resAns)
-                const question = await prisma.question.create({data:{
-                    topic:{
-                        connect:{
-                            id: req.params.id,
-                        }
-                    },
-                    content: questionAnswer.question,
-                    difficulty: 1,
-                    correctAnswer: finalAnswer,
-                }})
-         await prisma.quizQuestion.create({data:{
-            question:{
-                connect:
-                    {id:question.id}
-                },
-            quiz:{connect:{id:req.params.quizId}}}})
-               const answers = questionAnswer.answers.map(async answer=>{
-                let noLetterAnswer = answer.split(" ").slice(1,answer.split(" ").length).join(" ")
-                return prisma.answer.create({data:{
-                    content:noLetterAnswer,
-                    question:{
-                        connect: {id:question.id}
+        }else{
+            let json = JSON.parse(response.choices[0].message.content)
+            let question = await prisma.question.create({data:{
+                topic:{
+                    connect:{
+                        id: req.params.id,
                     }
-                }})
-               })
-               let responseAnswers = await Promise.all(answers)
-                res.json({question,answers:responseAnswers})
+                },
+                content: json.question,
+                difficulty: 1,
+                correctAnswer: json.correct,
+            }})
+            await prisma.quizQuestion.create({data:{
+                question:{
+                    connect:
+                        {id:question.id}
+                    },
+                quiz:{connect:{id:req.params.quizId}}}})
+                const answers = json.answers.map(async answer=>{
+                    // let noLetterAnswer = answer.split(" ").slice(1,answer.split(" ").length).join(" ")
+                    return prisma.answer.create({data:{
+                        content:answer,
+                        question:{
+                            connect: {id:question.id}
+                        }
+                    }})
+                   })
+                   let responseAnswers = await Promise.all(answers)
+
+                 res.json([{question,answers:responseAnswers}])
+        }   
             } catch (error) {
                 console.error(`Error creating answer: ${error}`);
                 throw error; 

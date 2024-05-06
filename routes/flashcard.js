@@ -12,7 +12,7 @@ export default function(authMiddleware){
 let answer= list[list.findIndex(e=>/"([^"]+)"/.test(e))].split(" ")
 const front = answer[answer.length-1]
 // console.log(list)
-const back = list[list.findIndex(e=>e.toLowerCase().includes("definition: "))])
+const back = list[list.findIndex(e=>e.toLowerCase().includes("definition: "))]
             return {front,back}
         }
      
