@@ -2,9 +2,7 @@ import express from 'express'
 import prisma from "../db/index.js";
 
 const router = express.Router()
-
 export default function(authMiddleware){
-
         router.get("/",async (req,res)=>{
             let topics = await prisma.topic.findMany()
             res.json(topics)
@@ -34,7 +32,7 @@ export default function(authMiddleware){
 } })
 res.json(userTopic)
         })
-        router.get("/user",authMiddleware,async (req,res)=>{
+        router.get("/user/:id",authMiddleware,async (req,res)=>{
 
             let topics = await prisma.userTopic.findMany({where: {userId:req.user.id},include:{topic:true}})
             res.json(topics)
@@ -49,7 +47,5 @@ res.json(userTopic)
 
             res.json(user)
         })
-
-    
     return router
 }

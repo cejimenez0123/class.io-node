@@ -4,12 +4,8 @@ const router = express.Router()
 
 export default function(authMiddleware){
 
-        router.get("/",async (req,res)=>{
-            let topics = await prisma.topic.findMany()
-            res.json(topics)
-           
-        })
-        router.get("/user",authMiddleware,async (req,res)=>{
+     
+        router.get("/",authMiddleware,async (req,res)=>{
             let quizzes = await prisma.userQuiz.findMany({where:{
                     userId: req.user.id
                 }, include: {
